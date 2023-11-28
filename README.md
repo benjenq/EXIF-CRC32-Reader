@@ -7,7 +7,7 @@ A tool to read EXIF & CRC32 information into database and query.
  Base on `Python 3.9+`, `PyQt5`, and `exiftool`.
 
 ### For windows / macOS users
-- Download python 3.9+ from [Python official website](https://www.python.org/downloads/) and install
+- Download python 3.9+ from [Python official website](https://www.python.org/downloads/) and install.
 - Install `PyQt5` via pip command.
 ```
 pip install pyqt5
@@ -64,15 +64,15 @@ python3 main.py
 - Click `Query EXIF Info` button to query EXIF infomation from database.
 
 ![pic2](pics/pic2.jpg)
-1. Choose your photo directory
-2. Select file extension with clicked check box
+1. Choose your photo directory.
+2. Select file extension with clicked check box.
 3. Click `Write to DB` button to start read crc32 & EXIF and write information into database. After process started, this button will become `Cancel` button.
 4. (*Optional*) Force stop reading process by click `Cancel` button.
 
 ![pic3](pics/pic3.jpg)
-- Use keyword to search / query EXIF
-- Two data filters : camera & lens
-- Right-click on field `relpath` to preview picture. 
+- Use keyword to search / query EXIF.
+- Two data filters : camera & lens.
+- Right-click on field `relpath` to preview picture.
 
 
 ## Author
