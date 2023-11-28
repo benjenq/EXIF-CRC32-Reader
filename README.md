@@ -44,6 +44,11 @@ sudo apt install python3-pip
 sudo pip3 install pyexiftool
 ```
 
+- Install `exiftool`.
+```
+sudo apt exiftool
+```
+
 ## Launch application
 **Windows user**
 ```
