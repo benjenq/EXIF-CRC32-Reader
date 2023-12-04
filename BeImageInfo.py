@@ -21,11 +21,6 @@ def writeToDB(imgFileName:str,rootPath="") -> bool:
     if not exifInfo:
         return False
     dbExif.bindWithDic(exifInfo)
-    if (dbExif.shutterSpeed >= 1):
-        dbExif.remark = "{:.1f} sec".format(dbExif.shutterSpeed)
-    elif dbExif.shutterSpeed != 0:
-        ShutterSpeed = int(1/dbExif.shutterSpeed)
-        dbExif.remark = "1/{} sec".format(ShutterSpeed)
     return dbExif.updateDB()
 
 def DBopen():

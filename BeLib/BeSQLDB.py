@@ -22,6 +22,7 @@ class EXIFInfo(object):
 
         self.aperture = -1
         self.shutterSpeed = -1
+        self.shutter = ""
         self.iso = -1
         self.focalLength = -1
         self.minFocalLength = -1
@@ -33,7 +34,7 @@ class EXIFInfo(object):
         self.latitude = -1
         self.longitude = -1
         self.remark = ""
-        l_sql = "SELECT crc32, filename, fileext, relpath, filesize, orginaldate, orginaltime, aperture, shutterspeed, iso, focallength, minfocallength, maxfocallength, maxaperture, cameramode, cameraserial, lensmode, \
+        l_sql = "SELECT crc32, filename, fileext, relpath, filesize, orginaldate, orginaltime, aperture, shutter, iso, shutterspeed, focallength, minfocallength, maxfocallength, maxaperture, cameramode, cameraserial, lensmode, \
                 gps_latitude, gps_longitude, remark \
             FROM exifinfo WHERE crc32 = ? "
         try:
@@ -48,8 +49,9 @@ class EXIFInfo(object):
                 self.orginalDateStr = row["orginaldate"]
                 self.orginalTimeStr = row["orginaltime"]
                 self.aperture = row["aperture"]
-                self.shutterSpeed = row["shutterspeed"]
+                self.shutter = row["shutter"]
                 self.iso = row["iso"]
+                self.shutterSpeed = row["shutterspeed"]
                 self.focalLength = row["focallength"]
                 self.minFocalLength = row["minfocallength"]
                 self.maxFocalLength = row["maxfocallength"]
@@ -68,10 +70,10 @@ class EXIFInfo(object):
         c = conn.cursor()
         try:
             l_sql = "INSERT OR REPLACE INTO exifinfo(\
-            crc32,filename,fileext,relpath,filesize,orginaldate,orginaltime,aperture,shutterspeed,iso,focallength,minfocallength,maxfocallength,maxaperture,cameramode,cameraserial,lensmode,\
+            crc32,filename,fileext,relpath,filesize,orginaldate,orginaltime,aperture,shutter,iso,shutterspeed,focallength,minfocallength,maxfocallength,maxaperture,cameramode,cameraserial,lensmode,\
             gps_latitude, gps_longitude, remark \
-            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ;"
-            c.execute(l_sql,(self.crc32,self.fileName,self.fileExt,self.relpath,self.fileSize,self.orginalDateStr,self.orginalTimeStr,self.aperture,self.shutterSpeed,self.iso,self.focalLength,self.minFocalLength,self.maxFocalLength,self.maxAperture,self.cameraMode,self.cameraSerial,self.lensMode,self.latitude,self.longitude,self.remark,))
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ;"
+            c.execute(l_sql,(self.crc32,self.fileName,self.fileExt,self.relpath,self.fileSize,self.orginalDateStr,self.orginalTimeStr,self.aperture,self.shutter,self.iso,self.shutterSpeed,self.focalLength,self.minFocalLength,self.maxFocalLength,self.maxAperture,self.cameraMode,self.cameraSerial,self.lensMode,self.latitude,self.longitude,self.remark,))
             #l_sql = "INSERT OR REPLACE INTO exifinfo(crc32) VALUES(?);"
             #c.execute(l_sql,(self.crc32,))
             return True
@@ -98,6 +100,11 @@ class EXIFInfo(object):
         self.cameraMode = str(self.readDict(exifDic,"Model"))
         self.cameraSerial = str(self.readDict(exifDic,"SerialNumber"))
         self.lensMode = str(self.readDict(exifDic,"LensModel"))
+        if (self.shutterSpeed >= 1):
+            self.shutter = "{:.1f} sec".format(self.shutterSpeed)
+        elif self.shutterSpeed != 0:
+            ShutterStr = int(1/self.shutterSpeed)
+            self.shutter = "1/{} sec".format(ShutterStr)
         if(self.lensMode == ""):
             if (self.minFocalLength != self.maxFocalLength):
                 self.lensMode = "EF{}-{}mm f/{}".format(self.minFocalLength,self.maxFocalLength,self.maxAperture)
@@ -132,13 +139,19 @@ def queryResult(cameramode:str,lensmode:str,keyword:str = ""):
     if lensmode != noSelectedStr:
         l_sql = l_sql + " AND lensmode = '{}' ".format(lensmode)
     if keyword != "":
-        l_sql = l_sql + " AND (relpath LIKE '%{keyword}%' OR orginaldate LIKE '%{keyword}%' ) ".format(keyword=keyword)    
+        keyword = keyword.replace("--", "").replace("\"","").replace("'","") #避免 SQL injection 攻擊
+        l_sql = l_sql + " AND (relpath LIKE '%{keyword}%' OR orginaldate LIKE '%{keyword}%' OR cameraserial LIKE '{keyword}%' ) ".format(keyword=keyword)    
     l_sql = l_sql + " LIMIT 500; "
     open()
     conn.row_factory = dict_factory #sqlite3.Row
-    rows = conn.execute(l_sql).fetchall()
-    close()
-    return rows
+    try:
+        rows = conn.execute(l_sql).fetchall()
+        close()
+        return True, rows
+    except Exception as e:
+        print(type(e),"Error: {}".format(str(e)))
+        close()
+        return False, str(e)
     result = []
     for row in rows:
         item = EXIFInfo(row["crc32"])
@@ -170,13 +183,15 @@ def BEGIN():
 
 def COMMIT():
     global conn
-    c = conn.cursor()
-    c.execute("COMMIT")
+    if conn is not None:
+        c = conn.cursor()
+        c.execute("COMMIT")
 
 def ROLLBACK():
     global conn
-    c = conn.cursor()
-    c.execute("ROLLBACK")
+    if conn is not None:
+        c = conn.cursor()
+        c.execute("ROLLBACK")
 
 def open():
     global conn
@@ -184,6 +199,7 @@ def open():
 
 def close():
     global conn
-    conn.commit()
-    conn.close()
+    if conn is not None:
+        conn.commit()
+        conn.close()
     conn == None

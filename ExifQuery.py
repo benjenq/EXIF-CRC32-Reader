@@ -14,17 +14,18 @@ if (sys.platform in ["darwin","linux"]):
 
 
 class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
-    def __init__(self,parent=None,rootPath:str=None):
+    def __init__(self, parent=None, rootPath:str=None):
         super(mainWin,self).__init__(parent)
         self.setupUi(self)
-        self.genCBItems(self.cb_camera,BeSQLDB.getCameraList())
-        self.genCBItems(self.cb_lens,BeSQLDB.getLensList())
+        self.genCBItems(self.cb_camera, BeSQLDB.getCameraList())
+        self.genCBItems(self.cb_lens, BeSQLDB.getLensList())
         self.btnQuery.clicked.connect(self.doQuery)
         if rootPath is None:
             self.rootPath.setText(OSHelp.launchPath())
         else:
             self.rootPath.setText(rootPath)
         self.btnChooseDirectory.clicked.connect(self.openDirectoryDialog)
+        self.tbv_data.doubleClicked.connect(self.tableViewDblClicked)
         BeLib.BeQtUI.toCenter(self)
         #關鍵字監聽事件
         self.tb_Keyword.installEventFilter(self) #對應 def eventFilter(self, source, event):
@@ -53,12 +54,15 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
                 self.doQuery()
         return super(mainWin, self).eventFilter(source, event) #https://stackoverflow.com/questions/50768366/installeventfilter-in-pyqt5
     
-    def genCBItems(self,obj,items:list): #產生下拉項目
+    def genCBItems(self, obj, items:list): #產生下拉項目
         for item in items:
             obj.addItem(item)
 
     def doQuery(self):
-        ds = BeSQLDB.queryResult(self.cb_camera.currentText(),self.cb_lens.currentText(),self.tb_Keyword.text())
+        success, ds = BeSQLDB.queryResult(self.cb_camera.currentText(),self.cb_lens.currentText(),self.tb_Keyword.text())
+        if not success:
+            ErrDiag.show(self,str(ds),True)
+            return
         self.model = BeTableModel(ds)
         self.tbv_data.setModel(self.model)
         if(len(ds) >0): #有資料
@@ -68,49 +72,66 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
             if(len(ds)>1):
                 self.tbv_data.sortByColumn(0,QtCore.Qt.SortOrder.AscendingOrder)
 
+    def tableViewDblClicked(self, clickedEvent:QtCore.QModelIndex):
+        clickedField = clickedEvent.model()._colTitle[clickedEvent.column()]
+        clickedData = clickedEvent.data()
+        BeUtility.toClipBoard(clickedData)
+        if clickedField == "relpath":
+            self.previewImage(clickedData)
+
     #https://stackoverflow.com/questions/60922666/create-different-context-menus-on-several-qtableviews
     #右鍵選單
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event:QtGui.QContextMenuEvent):
         if self.tbv_data.underMouse(): #點擊到 TableView 物件            
             selectedModel = self.tbv_data.selectionModel()
             if selectedModel is None: #TableView 內沒有 Model，意即沒有資料
                 return
-            selected_item = None #Cell 內的文字內容
+            selected_data = None #Cell 內的文字內容
             column = None #點擊了第幾個欄位對應的 Key 值
             for index in selectedModel.selectedIndexes():
-                selected_item = index.data() #Cell 內的文字內容
+                selected_data = index.data() #Cell 內的文字內容
                 column = index.model()._colTitle[index.column()] #relpath
-            if selected_item is None:
+            if selected_data is None:
                 return
             contextMenu = QMenu(self)
             icon = BeUtility.icon("icon-document")
-            copyAct = contextMenu.addAction(icon,"Copy")
+            copyAct = contextMenu.addAction(icon, "&Copy")
             if column == "relpath": #點擊了路徑欄位
                 sicon = BeUtility.icon("icon-search")
-                previewAct = contextMenu.addAction(sicon,"Preview")
+                previewAct = contextMenu.addAction(sicon, "&Preview")
 
             action = contextMenu.exec_(self.mapToGlobal(event.pos()))
             if action is None: #點擊到選單以外的部分
                 return
             if action == copyAct:
-                BeUtility.toClipBoard(selected_item)
+                BeUtility.toClipBoard(selected_data)
                 return
             if action == previewAct:
-                sPath = os.path.join(self.rootPath.text(),selected_item)
-                if not os.path.exists(sPath):
-                    ErrDiag.show(self,"File \"{}\" not Found!".format(sPath),True)
-                    return
-                if (sys.platform in ["win32"]):
-                    os.startfile(sPath)
-                else:
-                    subprocess.call(["open", sPath])
-
-                #self.close()
+                self.previewImage(selected_data)
+                return
+    
+    def previewImage(self, imgPath:str):
+        '''系統預設開啟檔案
+        ---
+        imgPath: 檔案相對路徑
+        '''
+        if imgPath is None:
+            ErrDiag.show(self,"File \"{}\" not Found!".format("None"),True)
+            return
+        sPath = os.path.join(self.rootPath.text(),imgPath)
+        if not os.path.exists(sPath):
+            ErrDiag.show(self, "File \"{}\" not Found!".format(sPath), True)
+            return
+        BeUtility.toClipBoard(sPath)
+        if (sys.platform in ["win32"]):
+            os.startfile(sPath)
+        else:
+            subprocess.call(["open", sPath])
 
     def openDirectoryDialog(self):
         dlg = QFileDialog()
         dlg.setDirectory(self.rootPath.text())
-        chooseDirName = dlg.getExistingDirectory(self,"Select Directory")
+        chooseDirName = dlg.getExistingDirectory(self, "Select Directory")
         if(chooseDirName == ""):
             return
         self.rootPath.setText(os.path.normpath(chooseDirName)) #根據 OS 將目錄名稱正規化
