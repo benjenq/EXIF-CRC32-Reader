@@ -114,10 +114,10 @@ class EXIFInfo(object):
         self.cameraSerial = str(self.readDict(exifDic,"SerialNumber"))
         self.lensMode = str(self.readDict(exifDic,"LensModel"))
         if (self.shutterSpeed >= 1):
-            self.shutter = "{:.1f} sec".format(self.shutterSpeed)
+            self.shutter = "{:.1f} sec.".format(self.shutterSpeed)
         elif self.shutterSpeed != 0:
             ShutterStr = int(1/self.shutterSpeed)
-            self.shutter = "1/{} sec".format(ShutterStr)
+            self.shutter = "1/{} sec.".format(ShutterStr)
         if(self.lensMode == ""):
             if (self.minFocalLength != self.maxFocalLength):
                 self.lensMode = "EF{}-{}mm f/{}".format(self.minFocalLength,self.maxFocalLength,self.maxAperture)
