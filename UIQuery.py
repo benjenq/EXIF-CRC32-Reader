@@ -20,7 +20,7 @@ class Ui_MainWindow(object):
         font.setPointSize(10)
         MainWindow.setFont(font)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/icon/icon/Dtafalonso-Android-Lollipop-Settings.512.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(":/icon/icon/icon-clipboard.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -104,7 +104,7 @@ class Ui_MainWindow(object):
         self.btnQuery.setStyleSheet("background-color: rgb(0, 85, 0);\n"
 "color: rgb(255, 255, 255);")
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(":/icon/icon/search.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon1.addPixmap(QtGui.QPixmap(":/icon/icon/icon-search.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.btnQuery.setIcon(icon1)
         self.btnQuery.setIconSize(QtCore.QSize(22, 22))
         self.btnQuery.setObjectName("btnQuery")
@@ -147,7 +147,7 @@ class Ui_MainWindow(object):
         self.btnChooseDirectory.setStyleSheet("background-color: rgb(32, 74, 135);\n"
 "color: rgb(255, 255, 255);")
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(":/icon/icon/folder.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(QtGui.QPixmap(":/icon/icon/icon-folder.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.btnChooseDirectory.setIcon(icon2)
         self.btnChooseDirectory.setIconSize(QtCore.QSize(24, 24))
         self.btnChooseDirectory.setObjectName("btnChooseDirectory")

@@ -16,7 +16,7 @@ class Ui_Dialog(object):
         Dialog.setObjectName("Dialog")
         Dialog.resize(591, 154)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/icon/icon/Dtafalonso-Android-Lollipop-Settings.512.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(":/icon/icon/icon-settings.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         Dialog.setWindowIcon(icon)
         self.progressBar = QtWidgets.QProgressBar(Dialog)
         self.progressBar.setGeometry(QtCore.QRect(10, 115, 506, 23))
@@ -96,7 +96,7 @@ class Ui_Dialog(object):
         self.btnWriteDB.setStyleSheet("color: rgb(255, 255, 255);\n"
 "background-color: rgb(0, 85, 0);")
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(":/icon/icon/document.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon1.addPixmap(QtGui.QPixmap(":/icon/icon/icon-write.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.btnWriteDB.setIcon(icon1)
         self.btnWriteDB.setIconSize(QtCore.QSize(24, 24))
         self.btnWriteDB.setObjectName("btnWriteDB")
@@ -119,7 +119,7 @@ class Ui_Dialog(object):
         self.btnChooseDirectory.setStyleSheet("background-color: rgb(32, 74, 135);\n"
 "color: rgb(255, 255, 255);")
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(":/icon/icon/folder.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(QtGui.QPixmap(":/icon/icon/icon-folder.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.btnChooseDirectory.setIcon(icon2)
         self.btnChooseDirectory.setIconSize(QtCore.QSize(24, 24))
         self.btnChooseDirectory.setObjectName("btnChooseDirectory")

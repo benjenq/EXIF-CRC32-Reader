@@ -3,9 +3,9 @@ from PyQt5 import QtWidgets,QtGui
 import os,sys,pathlib
 
 
-iconSet={"icon-settings" : ":/icon/icon/icon-settings.png",
-         "icon-document" : ":/icon/icon/document.png",
-         "icon-search" : ":/icon/icon/search.png",
+iconSet={"icon-image" : ":/icon/icon/icon-image.png",
+         "icon-edit" :":/icon/icon/icon-edit.png",
+         "icon-done" : ":/icon/icon/icon-done.png",
          "icon-info" : ":/icon/icon/icon-info.png"}
 
 def toClipBoard(string:str):

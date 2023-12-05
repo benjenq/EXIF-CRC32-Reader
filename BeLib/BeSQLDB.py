@@ -81,6 +81,19 @@ class EXIFInfo(object):
             print("{} Error : {}".format(type(e),str(e)))
             return False
 
+    def updateRemark(self):
+        global conn
+        #if conn is not None:
+        try:
+            c = conn.cursor()
+            l_sql = "UPDATE exifinfo SET remark = ? WHERE crc32 = ? ;"
+            c.execute(l_sql,(self.remark,self.crc32,))
+        except Exception as e:
+            print("{} Error : {}".format(type(e),str(e)))
+            return False
+
+
+
     def delete(self):
         c = conn.cursor()
         c.execute("DELETE FROM exifinfo WHERE crc32 = ? ;",(self.crc32))
@@ -140,7 +153,7 @@ def queryResult(cameramode:str,lensmode:str,keyword:str = ""):
         l_sql = l_sql + " AND lensmode = '{}' ".format(lensmode)
     if keyword != "":
         keyword = keyword.replace("--", "").replace("\"","").replace("'","") #避免 SQL injection 攻擊
-        l_sql = l_sql + " AND (relpath LIKE '%{keyword}%' OR orginaldate LIKE '%{keyword}%' OR cameraserial LIKE '{keyword}%' ) ".format(keyword=keyword)    
+        l_sql = l_sql + " AND (relpath LIKE '%{keyword}%' OR orginaldate LIKE '%{keyword}%' OR cameraserial LIKE '{keyword}%' OR remark LIKE '%{keyword}%') ".format(keyword=keyword)    
     l_sql = l_sql + " LIMIT 500; "
     open()
     conn.row_factory = dict_factory #sqlite3.Row

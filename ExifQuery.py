@@ -26,6 +26,13 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
             self.rootPath.setText(rootPath)
         self.btnChooseDirectory.clicked.connect(self.openDirectoryDialog)
         self.tbv_data.doubleClicked.connect(self.tableViewDblClicked)
+
+        #https://stackoverflow.com/questions/28186118/how-to-make-qtableview-to-enter-the-editing-mode-only-on-double-click
+        #停用 鍵盤觸發編輯模式 (預設值會觸發，當 remark 欄隨意按下任一鍵盤字母就觸發)
+        self.tbv_data.setEditTriggers(QAbstractItemView.NoEditTriggers |
+                             QAbstractItemView.DoubleClicked)
+        #設定欄位內容可用滑鼠拖放
+        self.tbv_data.setDragDropMode(QAbstractItemView.DragDrop)
         BeLib.BeQtUI.toCenter(self)
         #關鍵字監聽事件
         self.tb_Keyword.installEventFilter(self) #對應 def eventFilter(self, source, event):
@@ -75,7 +82,8 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
     def tableViewDblClicked(self, clickedEvent:QtCore.QModelIndex):
         clickedField = clickedEvent.model()._colTitle[clickedEvent.column()]
         clickedData = clickedEvent.data()
-        BeUtility.toClipBoard(clickedData)
+        if clickedField != "remark":
+            BeUtility.toClipBoard(clickedData)
         if clickedField == "relpath":
             self.previewImage(clickedData)
 
@@ -94,12 +102,13 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
             if selected_data is None:
                 return
             contextMenu = QMenu(self)
-            icon = BeUtility.icon("icon-document")
-            copyAct = contextMenu.addAction(icon, "&Copy")
+            copyAct = contextMenu.addAction(BeUtility.icon("icon-done"), "&Copy")
+            previewAct = None
+            editAct = None
             if column == "relpath": #點擊了路徑欄位
-                sicon = BeUtility.icon("icon-search")
-                previewAct = contextMenu.addAction(sicon, "&Preview")
-
+                previewAct = contextMenu.addAction(BeUtility.icon("icon-image"), "&Preview")
+            if column == "remark": #點擊了路徑欄位
+                editAct = contextMenu.addAction(BeUtility.icon("icon-edit"), "&Edit")
             action = contextMenu.exec_(self.mapToGlobal(event.pos()))
             if action is None: #點擊到選單以外的部分
                 return
@@ -108,6 +117,9 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
                 return
             if action == previewAct:
                 self.previewImage(selected_data)
+                return
+            if action == editAct:
+                self.tbv_data.edit(self.tbv_data.currentIndex())
                 return
     
     def previewImage(self, imgPath:str):
