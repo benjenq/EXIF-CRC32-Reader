@@ -1,7 +1,13 @@
-import sqlite3
-dbFile = "ImgExif.db"
+import sqlite3,os,shutil
+from .BeUtility import OSHelp
 conn = None
 noSelectedStr = "[Not Selected]"
+dbFileName = "ImgExif.db"
+dbFile = os.path.join(OSHelp.launchPath(),dbFileName)
+if not os.path.exists(dbFile):
+    print(f"copy DB File : {dbFile}")
+    shutil.copy2(os.path.join(os.path.dirname(os.path.dirname(__file__)),dbFileName),dbFile)
+
 
 def dict_factory(cursor, row):
     d:dict = {}

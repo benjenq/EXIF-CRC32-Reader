@@ -27,7 +27,8 @@ class OSHelp(object):
         if(sys.platform == "darwin"):
             dirPath = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
         else:
-            dirPath = os.path.dirname(os.path.abspath(__file__)) #os.path.dirname(sys.argv[0])
+            #dirPath = os.path.dirname(os.path.abspath(__file__)) #os.path.dirname(sys.argv[0])
+            dirPath = os.path.abspath(os.path.curdir)
         #TODO: pyinstaller 時標記下面這行
         #dirPath = os.path.dirname(path.abspath(__file__)) #pyinstaller
         return dirPath
