@@ -73,11 +73,19 @@ class BeTableModel(QtCore.QAbstractTableModel):
     #編輯完Cell內容後觸發
     def setData(self, index:QtCore.QModelIndex, value, role):
         if role == QtCore.Qt.EditRole:
-            self._data[index.row()][self.colIndexToKey(index.column())] = value
+            if self.colIndexToKey(index.column()) != "remark":
+                return False
+            # 從數字類型拖放到 remark 文字欄位，之後會出現以下錯誤，須將數字轉為文字
+            # '<' not supported between instances of 'str' and 'float'
+            oldValue = self._data[index.row()][self.colIndexToKey(index.column())]
+            nvalue = value
+            if (not isinstance(value, str)) and isinstance(oldValue, str):
+                nvalue = str(value)
+            self._data[index.row()][self.colIndexToKey(index.column())] = nvalue
             try:
                 BeSQLDB.open()
                 exifInfo = BeSQLDB.EXIFInfo(self._data[index.row()]["crc32"])
-                exifInfo.remark = value
+                exifInfo.remark = self._data[index.row()]["remark"]
                 exifInfo.updateRemark()
                 BeSQLDB.close()
             except Exception as e:

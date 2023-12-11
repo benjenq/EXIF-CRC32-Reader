@@ -132,8 +132,13 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
             return
         sPath = os.path.join(self.rootPath.text(),imgPath)
         if not os.path.exists(sPath):
-            ErrDiag.show(self, "File \"{}\" not Found!".format(sPath), True)
-            return
+            if sys.platform == "win32":
+                sPath = sPath.replace("/","\\")
+            else: #macOS = darwin, Linux = linux
+                sPath = sPath.replace("\\","/")
+            if not os.path.exists(sPath):
+                ErrDiag.show(self, "File \"{}\" not Found!".format(sPath), True)
+                return
         BeUtility.toClipBoard(sPath)
         if (sys.platform in ["win32"]):
             os.startfile(sPath)
