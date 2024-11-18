@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets,QtCore,QtGui #PyQt5 的部分
 from PyQt5.QtWidgets import *
 import UIQuery,ErrDiag
-import os,sys #ImagePreview
+import os,sys,webbrowser #ImagePreview
 from BeLib import BeSQLDB,BeUtility
 from BeLib.BeUtility import OSHelp
 import BeLib.BeQtUI
@@ -109,6 +109,10 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
                 previewAct = contextMenu.addAction(BeUtility.icon("icon-image"), "&Preview")
             if column == "remark": #點擊了路徑欄位
                 editAct = contextMenu.addAction(BeUtility.icon("icon-edit"), "&Edit")
+            if column in ["gps_latitude", "gps_longitude", "gps_altitude"]:
+                select_item = selectedModel.model()._data[self.tbv_data.currentIndex().row()]
+                if not (select_item['gps_latitude'] == -1 and select_item['gps_longitude'] == -1 and select_item['gps_altitude'] == -1):
+                    gpsAct = contextMenu.addAction(BeUtility.icon("icon-gps"), "&Google Map")
             action = contextMenu.exec_(self.mapToGlobal(event.pos()))
             if action is None: #點擊到選單以外的部分
                 return
@@ -121,6 +125,11 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
             if action == editAct:
                 self.tbv_data.edit(self.tbv_data.currentIndex())
                 return
+            if action == gpsAct:
+                if select_item == None:
+                    return
+                urlstr = f'http://maps.google.com/?q={select_item['gps_latitude']},{select_item['gps_longitude']}'
+                webbrowser.open(urlstr)
     
     def previewImage(self, imgPath:str):
         '''系統預設開啟檔案

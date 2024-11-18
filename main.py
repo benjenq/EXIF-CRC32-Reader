@@ -1,4 +1,5 @@
 # pyinstaller --add-data "ImgExif.db:." --add-data "exiftool.exe:." -F --windowed --clean main.py
+# windows: pyinstaller --add-data "ImgExif.db;." --add-data "exiftool.exe;." -F --icon=logo.ico --clean main.py
 from PyQt5 import QtWidgets,QtGui #PyQt5 : pip3 install pyqt5
 from PyQt5.QtWidgets import *
 import UIMain,ExifGen,ExifQuery,BeLib.BeQtUI

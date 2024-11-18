@@ -5,9 +5,9 @@ noSelectedStr = "[Not Selected]"
 dbFileName = "ImgExif.db"
 dbFile = os.path.join(OSHelp.launchPath(),dbFileName)
 if not os.path.exists(dbFile):
-    print(f"copy DB File : {dbFile}")
-    shutil.copy2(os.path.join(os.path.dirname(os.path.dirname(__file__)),dbFileName),dbFile)
-
+    srcFile = os.path.join(os.path.dirname(os.path.dirname(__file__)),dbFileName)
+    print(f"copy DB File {srcFile} to {dbFile}")
+    shutil.copy2(srcFile,dbFile)
 
 def dict_factory(cursor, row):
     d:dict = {}
@@ -39,9 +39,10 @@ class EXIFInfo(object):
         self.lensMode = ""
         self.latitude = -1
         self.longitude = -1
+        self.altitude = -1
         self.remark = ""
         l_sql = "SELECT crc32, filename, fileext, relpath, filesize, orginaldate, orginaltime, aperture, shutter, iso, shutterspeed, focallength, minfocallength, maxfocallength, maxaperture, cameramode, cameraserial, lensmode, \
-                gps_latitude, gps_longitude, remark \
+                gps_latitude, gps_longitude, gps_altitude, remark \
             FROM exifinfo WHERE crc32 = ? "
         try:
             conn.row_factory =  dict_factory #sqlite3.Row
@@ -67,6 +68,7 @@ class EXIFInfo(object):
                 self.lensMode = row["lensmode"]
                 self.latitude = row["gps_latitude"]
                 self.longitude = row["gps_longitude"]
+                self.altitude = row["gps_altitude"]
                 self.remark = row["remark"]
 
         except Exception as e:
@@ -77,9 +79,9 @@ class EXIFInfo(object):
         try:
             l_sql = "INSERT OR REPLACE INTO exifinfo(\
             crc32,filename,fileext,relpath,filesize,orginaldate,orginaltime,aperture,shutter,iso,shutterspeed,focallength,minfocallength,maxfocallength,maxaperture,cameramode,cameraserial,lensmode,\
-            gps_latitude, gps_longitude, remark \
-            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ;"
-            c.execute(l_sql,(self.crc32,self.fileName,self.fileExt,self.relpath,self.fileSize,self.orginalDateStr,self.orginalTimeStr,self.aperture,self.shutter,self.iso,self.shutterSpeed,self.focalLength,self.minFocalLength,self.maxFocalLength,self.maxAperture,self.cameraMode,self.cameraSerial,self.lensMode,self.latitude,self.longitude,self.remark,))
+            gps_latitude, gps_longitude, gps_altitude, remark \
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ;"
+            c.execute(l_sql,(self.crc32,self.fileName,self.fileExt,self.relpath,self.fileSize,self.orginalDateStr,self.orginalTimeStr,self.aperture,self.shutter,self.iso,self.shutterSpeed,self.focalLength,self.minFocalLength,self.maxFocalLength,self.maxAperture,self.cameraMode,self.cameraSerial,self.lensMode,self.latitude,self.longitude,self.altitude,self.remark,))
             #l_sql = "INSERT OR REPLACE INTO exifinfo(crc32) VALUES(?);"
             #c.execute(l_sql,(self.crc32,))
             return True
@@ -119,6 +121,10 @@ class EXIFInfo(object):
         self.cameraMode = str(self.readDict(exifDic,"Model"))
         self.cameraSerial = str(self.readDict(exifDic,"SerialNumber"))
         self.lensMode = str(self.readDict(exifDic,"LensModel"))
+        # GPS
+        self.latitude = float(self.readDict(exifDic,"GPSLatitude",-1))
+        self.longitude = float(self.readDict(exifDic,"GPSLongitude",-1))
+        self.altitude = float(self.readDict(exifDic,"GPSAltitude",-1))
         if (self.shutterSpeed >= 1):
             self.shutter = "{:.1f} sec.".format(self.shutterSpeed)
         elif self.shutterSpeed != 0:
