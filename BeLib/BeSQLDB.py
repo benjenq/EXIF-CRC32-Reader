@@ -41,35 +41,37 @@ class EXIFInfo(object):
         self.longitude = -1
         self.altitude = -1
         self.remark = ""
-        l_sql = "SELECT crc32, filename, fileext, relpath, filesize, orginaldate, orginaltime, aperture, shutter, iso, shutterspeed, focallength, minfocallength, maxfocallength, maxaperture, cameramode, cameraserial, lensmode, \
-                gps_latitude, gps_longitude, gps_altitude, remark \
+        self.address = ""
+        l_sql = "SELECT crc32, filename, fileext, relpath, filesize, originaldate, originaltime, aperture, shutter, iso, shutterspeed, focallength, minfocallength, maxfocallength, maxaperture, cameramode, cameraserial, lensmode, \
+                gps_latitude, gps_longitude, gps_altitude, remark, address \
             FROM exifinfo WHERE crc32 = ? "
         try:
             conn.row_factory =  dict_factory #sqlite3.Row
             c = conn.execute(l_sql,(crc32,))
             for row in c:
-                self.crc32 = row["crc32"]
-                self.fileName = row["filename"]
-                self.fileExt = row["fileext"]
-                self.relpath = row["relpath"]
-                self.fileSize = row["filesize"]
-                self.orginalDateStr = row["orginaldate"]
-                self.orginalTimeStr = row["orginaltime"]
-                self.aperture = row["aperture"]
-                self.shutter = row["shutter"]
-                self.iso = row["iso"]
-                self.shutterSpeed = row["shutterspeed"]
-                self.focalLength = row["focallength"]
-                self.minFocalLength = row["minfocallength"]
-                self.maxFocalLength = row["maxfocallength"]
-                self.maxAperture = row["maxaperture"]
-                self.cameraMode = row["cameramode"]
-                self.cameraSerial = row["cameraserial"]
-                self.lensMode = row["lensmode"]
-                self.latitude = row["gps_latitude"]
-                self.longitude = row["gps_longitude"]
-                self.altitude = row["gps_altitude"]
-                self.remark = row["remark"]
+                self.crc32 = row['crc32']
+                self.fileName = row['filename']
+                self.fileExt = row['fileext']
+                self.relpath = row['relpath']
+                self.fileSize = row['filesize']
+                self.originalDateStr = row['originaldate']
+                self.originalTimeStr = row['originaltime']
+                self.aperture = row['aperture']
+                self.shutter = row['shutter']
+                self.iso = row['iso']
+                self.shutterSpeed = row['shutterspeed']
+                self.focalLength = row['focallength']
+                self.minFocalLength = row['minfocallength']
+                self.maxFocalLength = row['maxfocallength']
+                self.maxAperture = row['maxaperture']
+                self.cameraMode = row['cameramode']
+                self.cameraSerial = row['cameraserial']
+                self.lensMode = row['lensmode']
+                self.latitude = row['gps_latitude']
+                self.longitude = row['gps_longitude']
+                self.altitude = row['gps_altitude']
+                self.remark = row['remark']
+                self.address = row['address']
 
         except Exception as e:
             print("{} Error X : {}".format(type(e),str(e)))
@@ -78,10 +80,10 @@ class EXIFInfo(object):
         c = conn.cursor()
         try:
             l_sql = "INSERT OR REPLACE INTO exifinfo(\
-            crc32,filename,fileext,relpath,filesize,orginaldate,orginaltime,aperture,shutter,iso,shutterspeed,focallength,minfocallength,maxfocallength,maxaperture,cameramode,cameraserial,lensmode,\
-            gps_latitude, gps_longitude, gps_altitude, remark \
-            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ;"
-            c.execute(l_sql,(self.crc32,self.fileName,self.fileExt,self.relpath,self.fileSize,self.orginalDateStr,self.orginalTimeStr,self.aperture,self.shutter,self.iso,self.shutterSpeed,self.focalLength,self.minFocalLength,self.maxFocalLength,self.maxAperture,self.cameraMode,self.cameraSerial,self.lensMode,self.latitude,self.longitude,self.altitude,self.remark,))
+            crc32,filename,fileext,relpath,filesize,originaldate,originaltime,aperture,shutter,iso,shutterspeed,focallength,minfocallength,maxfocallength,maxaperture,cameramode,cameraserial,lensmode,\
+            gps_latitude, gps_longitude, gps_altitude, remark, address \
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ;"
+            c.execute(l_sql,(self.crc32,self.fileName,self.fileExt,self.relpath,self.fileSize,self.originalDateStr,self.originalTimeStr,self.aperture,self.shutter,self.iso,self.shutterSpeed,self.focalLength,self.minFocalLength,self.maxFocalLength,self.maxAperture,self.cameraMode,self.cameraSerial,self.lensMode,self.latitude,self.longitude,self.altitude,self.remark,self.address,))
             #l_sql = "INSERT OR REPLACE INTO exifinfo(crc32) VALUES(?);"
             #c.execute(l_sql,(self.crc32,))
             return True
@@ -100,7 +102,16 @@ class EXIFInfo(object):
             print("{} Error : {}".format(type(e),str(e)))
             return False
 
-
+    def updateAddr(self):
+        global conn
+        #if conn is not None:
+        try:
+            c = conn.cursor()
+            l_sql = "UPDATE exifinfo SET address = ? WHERE crc32 = ? ;"
+            c.execute(l_sql,(self.address,self.crc32,))
+        except Exception as e:
+            print("{} Error : {}".format(type(e),str(e)))
+            return False
 
     def delete(self):
         c = conn.cursor()
@@ -114,8 +125,8 @@ class EXIFInfo(object):
         self.maxFocalLength = int(self.readDict(exifDic,"MaxFocalLength","0"))
         self.maxAperture = round(float(self.readDict(exifDic,"MaxAperture","0")),1)
         self.shutterSpeed = float(self.readDict(exifDic,"ShutterSpeed","0"))
-        self.orginalDateStr = str(self.readDict(exifDic,"DateTimeOriginal","x x")).split(" ")[0].replace(":", "-")
-        self.orginalTimeStr = str(self.readDict(exifDic,"DateTimeOriginal","x x")).split(" ")[1]
+        self.originalDateStr = str(self.readDict(exifDic,"DateTimeOriginal","x x")).split(" ")[0].replace(":", "-")
+        self.originalTimeStr = str(self.readDict(exifDic,"DateTimeOriginal","x x")).split(" ")[1]
         self.iso = int(self.readDict(exifDic,"ISO","0"))
         self.focalLength = int(self.readDict(exifDic,"FocalLength","0"))
         self.cameraMode = str(self.readDict(exifDic,"Model"))
@@ -158,14 +169,16 @@ def getLensList():
 
 def queryResult(cameramode:str,lensmode:str,keyword:str = ""):
     global conn
-    l_sql = "SELECT * FROM exifinfo WHERE 1=1 "
+    #l_sql = "SELECT * FROM exifinfo WHERE 1=1 "
+    l_sql = "SELECT crc32, relpath, originaldate || ' ' || originaltime as datetime, filesize, address, remark, aperture, shutter, shutterspeed, iso, cameramode, lensmode, \
+           gps_latitude, gps_longitude, gps_altitude FROM exifinfo WHERE 1=1 "
     if cameramode != noSelectedStr:
         l_sql = l_sql + " AND cameramode = '{}' ".format(cameramode)
     if lensmode != noSelectedStr:
         l_sql = l_sql + " AND lensmode = '{}' ".format(lensmode)
     if keyword != "":
         keyword = keyword.replace("--", "").replace("\"","").replace("'","") #避免 SQL injection 攻擊
-        l_sql = l_sql + " AND (relpath LIKE '%{keyword}%' OR orginaldate LIKE '%{keyword}%' OR cameraserial LIKE '{keyword}%' OR remark LIKE '%{keyword}%') ".format(keyword=keyword)    
+        l_sql = l_sql + " AND (relpath LIKE '%{keyword}%' OR originaldate LIKE '%{keyword}%' OR cameraserial LIKE '{keyword}%' OR remark LIKE '%{keyword}%' OR address LIKE '%{keyword}%') ".format(keyword=keyword)    
     l_sql = l_sql + " LIMIT 500; "
     open()
     conn.row_factory = dict_factory #sqlite3.Row

@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets,QtCore,QtGui #PyQt5 的部分
 from PyQt5.QtWidgets import *
 import UIQuery,ErrDiag
 import os,sys,webbrowser #ImagePreview
-from BeLib import BeSQLDB,BeUtility
+from BeLib import BeSQLDB,BeUtility,BeGPS
 from BeLib.BeUtility import OSHelp
 import BeLib.BeQtUI
 from BeLib.BeQtUI import BeTableModel
@@ -72,6 +72,11 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
             return
         self.model = BeTableModel(ds)
         self.tbv_data.setModel(self.model)
+        self.tbv_data.hideColumn(self.model.colNameToIndex('crc32'))
+        self.tbv_data.hideColumn(self.model.colNameToIndex('shutterspeed'))
+        self.tbv_data.hideColumn(self.model.colNameToIndex('gps_latitude'))
+        self.tbv_data.hideColumn(self.model.colNameToIndex('gps_longitude'))
+        self.tbv_data.hideColumn(self.model.colNameToIndex('gps_altitude'))
         if(len(ds) >0): #有資料
             #https://stackoverflow.com/questions/38098763/pyside-pyqt-how-to-make-set-qtablewidget-column-width-as-proportion-of-the-a
             header = self.tbv_data.horizontalHeader()
@@ -86,6 +91,10 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
             BeUtility.toClipBoard(clickedData)
         if clickedField == "relpath":
             self.previewImage(clickedData)
+        if clickedField == "address":
+            clickedItem = self.tbv_data.model()._data[clickedEvent.row()]
+            if not (clickedItem['gps_latitude'] == -1 and clickedItem['gps_longitude'] == -1 and clickedItem['gps_altitude'] == -1):
+                self.ReverseAddr(clickedItem['crc32'],clickedItem['gps_latitude'],clickedItem['gps_longitude'])
 
     #https://stackoverflow.com/questions/60922666/create-different-context-menus-on-several-qtableviews
     #右鍵選單
@@ -99,27 +108,33 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
             for index in selectedModel.selectedIndexes():
                 selected_data = index.data() #Cell 內的文字內容
                 column = index.model()._colTitle[index.column()] #relpath
-            if selected_data is None:
-                return
+            #if selected_data is None:
+            #    return
             contextMenu = QMenu(self)
             copyAct = contextMenu.addAction(BeUtility.icon("icon-done"), "&Copy")
             previewAct = None
             editAct = None
+            gpsAct = None
+            gpsReverse = None
             if column == "relpath": #點擊了路徑欄位
                 previewAct = contextMenu.addAction(BeUtility.icon("icon-image"), "&Preview")
             if column == "remark": #點擊了路徑欄位
                 editAct = contextMenu.addAction(BeUtility.icon("icon-edit"), "&Edit")
-            if column in ["gps_latitude", "gps_longitude", "gps_altitude"]:
+            if column in ['gps_latitude', 'gps_longitude', 'gps_altitude','address']:
                 select_item = selectedModel.model()._data[self.tbv_data.currentIndex().row()]
                 if not (select_item['gps_latitude'] == -1 and select_item['gps_longitude'] == -1 and select_item['gps_altitude'] == -1):
-                    gpsAct = contextMenu.addAction(BeUtility.icon("icon-gps"), "&Google Map")
+                    if column in ['gps_latitude', 'gps_longitude', 'gps_altitude']:
+                        gpsAct = contextMenu.addAction(BeUtility.icon("icon-gps"), "&Google Map")
+                    elif column in ['address']:
+                        gpsAct = contextMenu.addAction(BeUtility.icon("icon-gps"), "&Google Map")
+                        gpsReverse = contextMenu.addAction(BeUtility.icon("icon-reverse"), "&GPS Reverse")
             action = contextMenu.exec_(self.mapToGlobal(event.pos()))
             if action is None: #點擊到選單以外的部分
                 return
-            if action == copyAct:
+            if action == copyAct and selected_data != None:
                 BeUtility.toClipBoard(selected_data)
                 return
-            if action == previewAct:
+            if action == previewAct and selected_data != None:
                 self.previewImage(selected_data)
                 return
             if action == editAct:
@@ -130,7 +145,30 @@ class mainWin(QtWidgets.QMainWindow,UIQuery.Ui_MainWindow):
                     return
                 urlstr = f'http://maps.google.com/?q={select_item['gps_latitude']},{select_item['gps_longitude']}'
                 webbrowser.open(urlstr)
+                return
+            if action == gpsReverse:
+                if select_item == None:
+                    return
+                self.ReverseAddr(select_item['crc32'], select_item['gps_latitude'], select_item['gps_longitude'])
+                return
     
+    def ReverseAddr(self,crc32:str,latitude:float,longitude:float):
+        success, addr = BeGPS.Reverse(latitude,longitude)
+        if not success:
+            ErrDiag.show(self,addr,True)
+            return
+        ds =  self.tbv_data.model()._data
+        for item in ds:
+            if item['crc32'] == crc32:
+                item['address'] = f'{addr}'
+                BeSQLDB.open()
+                exifInfo = BeSQLDB.EXIFInfo(crc32)
+                exifInfo.address = addr
+                exifInfo.updateAddr()
+                BeSQLDB.close()
+        # https://stackoverflow.com/questions/27592088/how-to-refresh-qtableview-when-it-is-driven-by-model
+        self.tbv_data.viewport().update()
+
     def previewImage(self, imgPath:str):
         '''系統預設開啟檔案
         ---

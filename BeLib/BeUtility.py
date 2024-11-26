@@ -7,7 +7,8 @@ iconSet={"icon-image" : ":/icon/icon/icon-image.png",
          "icon-edit" :":/icon/icon/icon-edit.png",
          "icon-done" : ":/icon/icon/icon-done.png",
          "icon-info" : ":/icon/icon/icon-info.png",
-         "icon-gps" : ":/icon/icon/icon-gps.png"}
+         "icon-gps" : ":/icon/icon/icon-gps.png",
+         "icon-reverse" : ":/icon/icon/icon-reverse.png"}
 
 def toClipBoard(string:str):
     cb = QtWidgets.QApplication.clipboard()

@@ -4,13 +4,13 @@ A tool to read EXIF & CRC32 information into database and query.
 
 ## How to install
 
- Base on `Python 3.9+`, `PyQt5`, and `exiftool`.
+ Base on `Python 3.9+`, `PyQt5`, `geopy`, and `exiftool`.
 
 ### For windows / macOS users
 - Download python 3.9+ from [Python official website](https://www.python.org/downloads/) and install.
-- Install `PyQt5` via pip command.
+- Install `PyQt5` and `geopy` via pip command.
 ```
-pip install pyqt5
+pip install pyqt5 geopy
 ```
 - Install `pyexiftool` via pip command.
 ```
@@ -39,6 +39,10 @@ sudo apt install python3-pip
   ```
   sudo apt install python3-pyqt5
   ```
+- Install `geopy` via pip command.
+```
+pip install geopy
+```
 - Install `pyexiftool` via pip command.
 ```
 sudo pip3 install pyexiftool

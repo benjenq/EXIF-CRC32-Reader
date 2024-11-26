@@ -16,7 +16,7 @@ class BeTableModel(QtCore.QAbstractTableModel):
         super().__init__(parent)
         self._data = data
         self._colTitle = []
-        self.BeColor = {'editColor':'#ffff99',"previewColor" : "#e6f2ff"}
+        self.BeColor = {'editColor':'#ffff99','previewColor' : '#e6f2ff','addrColor' : '#E2C8C9'}
         if len(data) > 0:
             self._colTitle = list(data[0].keys())
 
@@ -36,9 +36,18 @@ class BeTableModel(QtCore.QAbstractTableModel):
                 return QtGui.QFont('Arial',13)
         return super().headerData(section, orientation, role) # must have this line
 
-    def colIndexToKey(self,col):
+    def colIndexToName(self,col):
         if len(self._colTitle) > 0:
             return self._colTitle[col]
+        
+    def colNameToIndex(self,colName:str):
+        if len(self._colTitle) <= 0:
+            return -1
+        try:
+            idx = self._colTitle.index(colName)
+            return idx
+        except Exception as e:
+            return -1
     
     #QtCore.Qt.EditRole 可編輯 https://www.pythonguis.com/faq/editing-pyqt-tableview/
     def data(self, index, role):
@@ -48,40 +57,48 @@ class BeTableModel(QtCore.QAbstractTableModel):
         col = index.column()
         if role in {QtCore.Qt.DisplayRole,QtCore.Qt.EditRole} :
             #print("row={},col={},role={}".format(row,col,role))
-            if isinstance(self._data[row][self.colIndexToKey(col)],int):
+            if isinstance(self._data[row][self.colIndexToName(col)],int):
                 #https://stackoverflow.com/questions/1823058/how-to-print-a-number-using-commas-as-thousands-separators
-                return "{val:,}".format(val=self._data[row][self.colIndexToKey(col)])            
-            return self._data[row][self.colIndexToKey(col)]
+                return "{val:,}".format(val=self._data[row][self.colIndexToName(col)])            
+            return self._data[row][self.colIndexToName(col)]
         if role in {QtCore.Qt.TextAlignmentRole}:
-            if isinstance(self._data[row][self.colIndexToKey(col)],str) : 
+            if isinstance(self._data[row][self.colIndexToName(col)],str) : 
                 return  QtCore.Qt.AlignLeft
             else:
                 return  QtCore.Qt.AlignTrailing #<class 'float'><class 'int'>
         if role in {QtCore.Qt.BackgroundColorRole}:
-            if self.colIndexToKey(col) == "remark":
+            if self.colIndexToName(col) == "remark":
                 return QtGui.QColor(self.BeColor["editColor"])
-            if self.colIndexToKey(col) == "relpath":
+            if self.colIndexToName(col) == "relpath":
                 return QtGui.QColor(self.BeColor["previewColor"])
+            if self.colIndexToName(col) == "address":
+                #找出 GPS 座標 gps_latitude, gps_longitude, gps_altitude
+                if not (self._data[row]['gps_latitude'] == -1 and self._data[row]['gps_longitude'] == -1 and self._data[row]['gps_altitude'] == -1) :
+                    return QtGui.QColor(self.BeColor["addrColor"])
         if role in {QtCore.Qt.ToolTipRole}:
-            if self.colIndexToKey(col) == "remark":
+            if self.colIndexToName(col) == "remark":
                 return str("Double click to edit")
-            if self.colIndexToKey(col) == "relpath":
+            if self.colIndexToName(col) == "relpath":
                 return str("Double click to preview")
+            if self.colIndexToName(col) == "address":
+                if not (self._data[row]['gps_latitude'] == -1 and self._data[row]['gps_longitude'] == -1 and self._data[row]['gps_altitude'] == -1) :
+                    return str("Double click to resolve address")
+            
 
     
     #可編輯 https://www.pythonguis.com/faq/editing-pyqt-tableview/
     #編輯完Cell內容後觸發
     def setData(self, index:QtCore.QModelIndex, value, role):
         if role == QtCore.Qt.EditRole:
-            if self.colIndexToKey(index.column()) != "remark":
+            if self.colIndexToName(index.column()) != "remark":
                 return False
             # 從數字類型拖放到 remark 文字欄位，之後會出現以下錯誤，須將數字轉為文字
             # '<' not supported between instances of 'str' and 'float'
-            oldValue = self._data[index.row()][self.colIndexToKey(index.column())]
+            oldValue = self._data[index.row()][self.colIndexToName(index.column())]
             nvalue = value
             if (not isinstance(value, str)) and isinstance(oldValue, str):
                 nvalue = str(value)
-            self._data[index.row()][self.colIndexToKey(index.column())] = nvalue
+            self._data[index.row()][self.colIndexToName(index.column())] = nvalue
             try:
                 BeSQLDB.open()
                 exifInfo = BeSQLDB.EXIFInfo(self._data[index.row()]["crc32"])
@@ -108,7 +125,10 @@ class BeTableModel(QtCore.QAbstractTableModel):
             #print('column={},order={}'.format(column, order))
             self.layoutAboutToBeChanged.emit()            
             #self._data = sorted(self._data, key=lambda item: item[self.colIndexToKey(column)],reverse=bool(order))
-            self._data.sort(key=lambda item: item[self.colIndexToKey(column)],reverse=bool(order))
+            sortColumn = self.colIndexToName(column)
+            if sortColumn == 'shutter':
+                sortColumn = "shutterspeed"
+            self._data.sort(key=lambda item: item[sortColumn],reverse=bool(order))
             self.layoutChanged.emit()
         except Exception as e:
             print(e)
